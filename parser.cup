@@ -1,0 +1,67 @@
+package com.pacheco.mee_3;
+
+import java_cup.runtime.*;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.lang.Object;
+import java.util.*;
+import java_cup.runtime.Symbol;
+
+parser code {:
+    protected Lexer lexer;
+    private HashMap<String, Integer> symT;
+    private String filename;
+
+    public Parser(String filename) {
+        this.filename = filename;
+    }
+:};
+
+init with {:
+    ComplexSymbolFactory f = new ComplexSymbolFactory();
+    symbolFactory = f;
+    File file = new File(filename);
+    FileInputStream fis = null;
+    try {
+        fis = new FileInputStream(file);
+    } catch (IOException e) {
+        e.printStackTrace();
+    } 
+    lexer = new Lexer(f,fis);
+    symT = new HashMap<String,Integer>();
+:};
+
+scan with {: return lexer.yylex(); :};
+
+terminal Double NUMBER;
+terminal        ADD;
+terminal        MINUS;
+terminal        MULT;
+terminal        DIV;
+terminal        POW;
+terminal        O_BRACKET;
+terminal        C_BRACKET;
+
+non terminal S;
+non terminal EXP;
+non terminal NUM;
+
+precedence left ADD, MINUS;
+precedence left MULT, DIV;
+precedence left POW;
+
+S ::= EXP:e {: System.out.println("result: " + e); :}
+    ;
+
+EXP ::= EXP:e1 ADD EXP:e2             {: RESULT = (Double)e1 + (Double)e2; :}
+      | EXP:e1 MINUS EXP:e2           {: RESULT = (Double)e1 - (Double)e2; :}
+      | EXP:e1 MULT EXP:e2            {: RESULT = (Double)e1 * (Double)e2; :}
+      | EXP:e1 DIV EXP:e2             {: RESULT = (Double)e1 / (Double)e2; :}
+      | EXP:e1 POW EXP:e2             {: RESULT = Math.pow((Double)e1, (Double)e2); :}
+      | O_BRACKET EXP:e C_BRACKET     {: RESULT = e; :}
+      | NUM:n                         {: RESULT = n; :}
+      ;
+
+NUM ::= NUMBER:n        {: RESULT = n; System.out.println(n); :}
+    ;
